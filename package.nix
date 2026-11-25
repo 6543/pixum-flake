@@ -234,8 +234,11 @@ stdenv.mkDerivation {
     ln -s ${procps}/bin/pidof pidof
 
     # The app also calls which, lsb_release and chmod through PATH.
+    # On native Wayland with a GPU the embedded web view (start page, shop)
+    # stays blank, so always run through X11/XWayland.
     makeWrapper "$appDir/Pixum Fotowelt" $out/bin/pixum-fotowelt \
       --chdir "$appDir" \
+      --set QT_QPA_PLATFORM xcb \
       --prefix PATH : ${
         lib.makeBinPath [
           coreutils
