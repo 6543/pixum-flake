@@ -88,6 +88,7 @@ User data ends up in `~/.mcf`, `~/.config/CeWe Color` and `~/.cache/Pixum Fotowe
 - **No built-in updater.** It would try to write into the read-only Nix store. Updates come from bumping this flake.
 - **No Pixum Fotoschau menu entry.** The binary is included in `opt/pixum-fotowelt`, but only the main app gets a desktop entry.
 - **No install statistics.** The vendor installer reports download and install events to Pixum's server. Nix only downloads the archives.
+- **No `/bin/pidof` needed.** The app runs the hardcoded `/bin/pidof` at startup and hangs on the splash screen without it, which is the case on NixOS. The package rewrites that path in `libCWCore` to a `pidof` from procps shipped next to the app.
 
 ## Updating to a new Pixum version
 

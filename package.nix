@@ -8,6 +8,11 @@
   copyDesktopItems,
   makeDesktopItem,
   icoutils,
+  python3,
+  coreutils,
+  lsb-release,
+  procps,
+  which,
   alsa-lib,
   dbus,
   expat,
@@ -115,6 +120,7 @@ stdenv.mkDerivation {
     makeWrapper
     copyDesktopItems
     icoutils
+    python3
   ];
 
   buildInputs = [
@@ -213,8 +219,30 @@ stdenv.mkDerivation {
     # The built-in updater would try to write into the read-only store.
     rm -f updater.pl
 
+    # libCWCore runs the hardcoded /bin/pidof to look for running AutoBookService
+    # and hps processes. Without it the app stays on the splash screen forever,
+    # which happens on NixOS.
+    # Replace it with ././/pidof: same length, resolved against the working
+    # directory the wrapper sets.
+    python3 - <<'EOF'
+    path = "libCWCore.so.0.1.0"
+    old, new = ("/bin/pidof".encode("utf-16-le"), "././/pidof".encode("utf-16-le"))
+    data = open(path, "rb").read()
+    assert data.count(old) == 1, f"expected exactly one /bin/pidof in {path}"
+    open(path, "wb").write(data.replace(old, new))
+    EOF
+    ln -s ${procps}/bin/pidof pidof
+
+    # The app also calls which, lsb_release and chmod through PATH.
     makeWrapper "$appDir/Pixum Fotowelt" $out/bin/pixum-fotowelt \
-      --chdir "$appDir"
+      --chdir "$appDir" \
+      --prefix PATH : ${
+        lib.makeBinPath [
+          coreutils
+          lsb-release
+          which
+        ]
+      }
 
     # Icons from the vendor .ico
     icotool -x -o . Resources/keyaccount/32.ico
